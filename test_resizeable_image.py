@@ -4,10 +4,10 @@ from resizeable_image import ResizeableImage
 
 class TestImage(unittest.TestCase):
     def test_small(self):
-        self.image_test('sunset_small.png', 23147)
+        self.image_test('Images/sunset_small.png', 23147)
 
     def test_large(self):
-        self.image_test('sunset_full.png', 26010)
+        self.image_test('Images/sunset_full.png', 26010)
 
     def image_test(self, filename, expected_cost):
         image = ResizeableImage(filename)
