@@ -1,4 +1,5 @@
 "# csc440Assignment5" 
+
 resizeable_image.py: You will be implementing best_seam() here.
 
 imagematrix.py: Implements some utility functions that will make it
