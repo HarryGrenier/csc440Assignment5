@@ -1,38 +1,50 @@
 import imagematrix
 
 class ResizeableImage(imagematrix.ImageMatrix):
-    def best_seam(self, dp=True):
+    def best_seam(self):
+        """
+        Finds the vertical seam with the minimum energy using dynamic programming.
+        Returns the seam as a list of (i, j) tuples.
+        """
         width, height = self.width, self.height
-        # Helper function to recursively compute seam energy
-        def compute_seam_energy(i, j, memo):
-            if j == height:  # Reached bottom row
-                return 0
-            if (i, j) in memo:
-                return memo[(i, j)]
-            
-            energy = self.energy(i, j)
-            min_energy = energy + min(
-                compute_seam_energy(i + di, j + 1, memo)
-                for di in (-1, 0, 1)
-                if 0 <= i + di < width
-            )
-            memo[(i, j)] = min_energy
-            return min_energy
-        
-        # Find the seam starting from top row with minimum energy
-        memo = {}
-        best_start = min((compute_seam_energy(i, 0, memo), i) for i in range(width))[1]
-        
-        # Recover seam from top to bottom
+
+        # Create the dp table to store minimum energy up to each pixel
+        dp = [[0] * height for _ in range(width)]
+        backtrack = [[0] * height for _ in range(width)]
+
+        # Initialize the dp values for the first row
+        for i in range(width):
+            dp[i][0] = self.energy(i, 0)
+
+        # Fill the dp table row by row
+        for j in range(1, height):
+            for i in range(width):
+                # Find the minimum energy from the row above
+                min_energy = dp[i][j - 1]
+                direction = 0  # Default is straight up
+
+                if i > 0 and dp[i - 1][j - 1] < min_energy:
+                    min_energy = dp[i - 1][j - 1]
+                    direction = -1  # Diagonal left
+
+                if i < width - 1 and dp[i + 1][j - 1] < min_energy:
+                    min_energy = dp[i + 1][j - 1]
+                    direction = 1  # Diagonal right
+
+                # Update dp and backtrack tables
+                dp[i][j] = self.energy(i, j) + min_energy
+                backtrack[i][j] = direction
+
+        # Find the starting point of the best seam
+        # Get the index of the minimum energy in the last row of dp
+        min_end_index = min(range(width), key=lambda i: dp[i][height - 1])
+
+        # Recover the seam using the backtrack table
         seam = []
-        i = best_start
-        for j in range(height):
+        i = min_end_index
+        for j in range(height - 1, -1, -1):
             seam.append((i, j))
-            i += min(
-                ((compute_seam_energy(i + di, j + 1, memo), di)
-                 for di in (-1, 0, 1)
-                 if 0 <= i + di < width),
-                key=lambda x: x[0]
-            )[1]
-        
+            i += backtrack[i][j]
+
+        seam.reverse()  # Seam recovered from bottom to top; reverse it
         return seam
